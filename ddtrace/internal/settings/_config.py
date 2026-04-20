@@ -1,5 +1,4 @@
 from copy import deepcopy
-import re
 import sys
 from typing import Any  # noqa:F401
 from typing import Callable  # noqa:F401
@@ -37,6 +36,7 @@ from ddtrace.internal.utils.cache import cachedmethod
 from ddtrace.internal.utils.deprecations import DDTraceDeprecationWarning
 from ddtrace.internal.utils.formats import asbool
 from ddtrace.internal.utils.formats import parse_tags_str
+from ddtrace.internal.utils.regex import safe_compile_re
 from ddtrace.vendor.debtcollector import deprecate
 
 from ._inferred_base_service import detect_service
@@ -638,15 +638,13 @@ class Config(object):
             "DD_TRACE_OBFUSCATION_QUERY_STRING_REGEXP", DD_TRACE_OBFUSCATION_QUERY_STRING_REGEXP_DEFAULT
         )
         self._global_query_string_obfuscation_disabled = dd_trace_obfuscation_query_string_regexp == ""
-        self._obfuscation_query_string_pattern = None
         self._http_tag_query_string = True  # Default behaviour of query string tagging in http.url
-        try:
-            self._obfuscation_query_string_pattern = re.compile(
-                dd_trace_obfuscation_query_string_regexp.encode("ascii")
-            )
-        except Exception:
-            log.warning("Invalid obfuscation pattern, disabling query string tracing", exc_info=True)
-            self._http_tag_query_string = False  # Disable query string tagging if malformed obfuscation pattern
+        self._obfuscation_query_string_pattern = safe_compile_re(
+            dd_trace_obfuscation_query_string_regexp.encode("ascii"),
+            env_var="DD_TRACE_OBFUSCATION_QUERY_STRING_REGEXP",
+        )
+        if self._obfuscation_query_string_pattern is None and not self._global_query_string_obfuscation_disabled:
+            self._http_tag_query_string = False
 
         self._ci_visibility_agentless_enabled = _get_config("DD_CIVISIBILITY_AGENTLESS_ENABLED", False, asbool)
         self._ci_visibility_agentless_url = _get_config("DD_CIVISIBILITY_AGENTLESS_URL", "")

@@ -1,9 +1,11 @@
 import re
 import string
 
+from ddtrace.appsec._constants import DEFAULT
 from ddtrace.internal.logger import get_logger
 from ddtrace.internal.settings._config import config
 from ddtrace.internal.settings.asm import config as asm_config
+from ddtrace.internal.utils.regex import safe_compile_re
 
 from .._taint_tracking import OriginType
 from .._utils import _get_source_index
@@ -41,8 +43,21 @@ class SensitiveHandler:
     """
 
     def __init__(self):
-        self._name_pattern = re.compile(asm_config._iast_redaction_name_pattern, re.IGNORECASE | re.MULTILINE)
-        self._value_pattern = re.compile(asm_config._iast_redaction_value_pattern, re.IGNORECASE | re.MULTILINE)
+        _flags = re.IGNORECASE | re.MULTILINE
+        _default_name = re.compile(DEFAULT.IAST_REDACTION_NAME_PATTERN, _flags)
+        _default_value = re.compile(DEFAULT.IAST_REDACTION_VALUE_PATTERN, _flags)
+        self._name_pattern = safe_compile_re(
+            asm_config._iast_redaction_name_pattern,
+            _flags,
+            default=_default_name,
+            env_var="DD_IAST_REDACTION_NAME_PATTERN",
+        )
+        self._value_pattern = safe_compile_re(
+            asm_config._iast_redaction_value_pattern,
+            _flags,
+            default=_default_value,
+            env_var="DD_IAST_REDACTION_VALUE_PATTERN",
+        )
         # Query string obfuscation pattern for synchronization with span-level redaction
         self._query_string_pattern = config._obfuscation_query_string_pattern
 
@@ -402,17 +417,20 @@ class SensitiveHandler:
             value_parts.append({"redacted": True})
 
     def set_redaction_patterns(self, redaction_name_pattern=None, redaction_value_pattern=None):
+        _flags = re.IGNORECASE | re.MULTILINE
         if redaction_name_pattern:
-            try:
-                self._name_pattern = re.compile(redaction_name_pattern, re.IGNORECASE | re.MULTILINE)
-            except re.error:
-                log.warning("Redaction name pattern is not valid")
+            compiled = safe_compile_re(redaction_name_pattern, _flags)
+            if compiled is not None:
+                self._name_pattern = compiled
+            else:
+                log.warning("Redaction name pattern is not valid or has catastrophic backtracking")
 
         if redaction_value_pattern:
-            try:
-                self._value_pattern = re.compile(redaction_value_pattern, re.IGNORECASE | re.MULTILINE)
-            except re.error:
-                log.warning("Redaction value pattern is not valid")
+            compiled = safe_compile_re(redaction_value_pattern, _flags)
+            if compiled is not None:
+                self._value_pattern = compiled
+            else:
+                log.warning("Redaction value pattern is not valid or has catastrophic backtracking")
 
 
 sensitive_handler = SensitiveHandler()

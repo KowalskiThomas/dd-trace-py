@@ -398,6 +398,17 @@ class DEFAULT(metaclass=Constant_Class):
         r"{5}END[a-z\s]+PRIVATE\sKEY|ssh-rsa\s*([a-z0-9\/\.+]{100,})"
     )
     ENDPOINT_COLLECTION_LIMIT = 300
+    IAST_REDACTION_NAME_PATTERN = (
+        r"(?i)^.*(?:p(?:ass)?w(?:or)?d|pass(?:_?phrase)?|secret|(?:api_?|private_?|"
+        r"public_?|access_?|secret_?)key(?:_?id)?|password|token|username|user_id|last.name|"
+        r"consumer_?(?:id|key|secret)|"
+        r"sign(?:ed|ature)?|auth(?:entication|orization)?)"
+    )
+    IAST_REDACTION_VALUE_PATTERN = (
+        r"(?i)bearer\s+[a-z0-9\._\-]+|token:[a-z0-9]{13}|password|gh[opsu]_[0-9a-zA-Z]{36}|"
+        r"ey[I-L][\w=-]+\.ey[I-L][\w=-]+(\.[\w.+\/=-]+)?|[\-]{5}BEGIN[a-z\s]+PRIVATE\sKEY"
+        r"[\-]{5}[^\-]+[\-]{5}END[a-z\s]+PRIVATE\sKEY|ssh-rsa\s*[a-z0-9\/\.+]{100,}"
+    )
 
 
 class EXPLOIT_PREVENTION(metaclass=Constant_Class):

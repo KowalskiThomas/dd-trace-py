@@ -134,17 +134,12 @@ class ASMConfig(DDConfig):
     _iast_redaction_name_pattern = DDConfig.var(
         str,
         IAST.REDACTION_NAME_PATTERN,
-        default=r"(?i)^.*(?:p(?:ass)?w(?:or)?d|pass(?:_?phrase)?|secret|(?:api_?|private_?|"
-        + r"public_?|access_?|secret_?)key(?:_?id)?|password|token|username|user_id|last.name|"
-        + r"consumer_?(?:id|key|secret)|"
-        + r"sign(?:ed|ature)?|auth(?:entication|orization)?)",
+        default=DEFAULT.IAST_REDACTION_NAME_PATTERN,
     )
     _iast_redaction_value_pattern = DDConfig.var(
         str,
         IAST.REDACTION_VALUE_PATTERN,
-        default=r"(?i)bearer\s+[a-z0-9\._\-]+|token:[a-z0-9]{13}|password|gh[opsu]_[0-9a-zA-Z]{36}|"
-        + r"ey[I-L][\w=-]+\.ey[I-L][\w=-]+(\.[\w.+\/=-]+)?|[\-]{5}BEGIN[a-z\s]+PRIVATE\sKEY"
-        + r"[\-]{5}[^\-]+[\-]{5}END[a-z\s]+PRIVATE\sKEY|ssh-rsa\s*[a-z0-9\/\.+]{100,}",
+        default=DEFAULT.IAST_REDACTION_VALUE_PATTERN,
     )
     # We never use `asm_config._iast_max_concurrent_requests` directly,
     # but we define it so it can be reported through telemetry, since it’s used from the C files.
