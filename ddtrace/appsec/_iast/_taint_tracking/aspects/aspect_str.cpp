@@ -35,8 +35,8 @@ call_original_function(PyObject* orig_function,
     py::args py_args(py_args_list);
 
     PyObject* kwargs = kwnames_to_kwargs(args, nargs, kwnames);
-    auto res = PyObject_Call(orig_function, py_args.ptr(), kwnames_to_kwargs(args, nargs, kwnames));
-    Py_DECREF(kwargs);
+    auto res = PyObject_Call(orig_function, py_args.ptr(), kwargs);
+    Py_XDECREF(kwargs);
     return res;
 }
 
@@ -208,7 +208,7 @@ api_str_aspect(PyObject* self, PyObject* const* args, const Py_ssize_t nargs, Py
                     copy_and_shift_ranges_from_strings(text, result_o, offset, len_result_o, tx_map);
                 }
             }
-            Py_DECREF(check_offset);
+            Py_XDECREF(check_offset);
         }
         return result_o;
     });
